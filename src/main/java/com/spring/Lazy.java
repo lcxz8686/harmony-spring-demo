@@ -12,4 +12,3 @@ public @interface Lazy {
     boolean value() default true;
 
 }
-

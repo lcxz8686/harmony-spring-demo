@@ -16,9 +16,12 @@ import java.util.Map;
  */
 public class HarmonyApplicationContext {
 
+    // 接收外部传入的类--AppConfig
     private Class configClass;
 
+    // 用于存储 BeanDefinition
     private Map<String, BeanDefinition> beanDefinitionMap = new HashMap<>();
+
     // 单例池
     private Map<String, Object> singletonObjects = new HashMap<>();
 
@@ -138,12 +141,17 @@ public class HarmonyApplicationContext {
     private void scan(Class configClass) {
         if (configClass.isAnnotationPresent(ComponentScan.class)) {
             ComponentScan componentScanAnnotation = (ComponentScan) configClass.getAnnotation(ComponentScan.class);
+
+            // 获取注解里面的值：@ComponentScan("com.harmony.service") --> com.harmony.service
             String path = componentScanAnnotation.value();
-            path = path.replace(".", "/");
+            path = path.replace(".", "/");   // com/harmony/service
             System.out.println(path);
 
+            // 获取当前类的类加载器(APP)
             ClassLoader classLoader = HarmonyApplicationContext.class.getClassLoader();
+            // path是一个相对路径，APP加载器加载 target/classes 目录下的path
             URL resource = classLoader.getResource(path);
+
             // 拿到这目录
             File file = new File(resource.getFile());
             if (file.isDirectory()) {
@@ -155,7 +163,7 @@ public class HarmonyApplicationContext {
                     System.out.println(absolutePath);
 
                     try {
-                        // 加载类
+                        // 加载类 （当然Spring源码中，加载使用ASM技术！！！）
                         Class<?> clazz = classLoader.loadClass(absolutePath);
                         // 找到 @Component注解 -> 说明是一个Bean
                         if (clazz.isAnnotationPresent(Component.class)) {
@@ -192,9 +200,8 @@ public class HarmonyApplicationContext {
                                 // 没有Scope注解,说明是单例的(Spring中，Scope注解默认是单例)
                                 beanDefinition.setScope("Singleton");
                             }
-                            /**
-                             * 每扫描到一个bean，就生成一个 BeanDefinition，再将这个 BeanDefinition 存到 map 里面
-                             */
+
+                            // 每扫描到一个bean，就生成一个 BeanDefinition，再将这个 BeanDefinition 存到 map 里面
                             beanDefinitionMap.put(beanName, beanDefinition);
                         }
                     } catch (ClassNotFoundException e) {

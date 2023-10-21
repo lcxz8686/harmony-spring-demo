@@ -1,8 +1,7 @@
 package com.spring;
 
 /**
- * BeanDefinition:
- *      用于保存Bean的相关信息
+ * BeanDefinition: 用于保存Bean的相关信息
  */
 public class BeanDefinition {
     private Class type;     // 类型
