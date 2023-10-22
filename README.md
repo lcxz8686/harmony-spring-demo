@@ -11,7 +11,7 @@
 
 @Target 用于指定注解可以应用（生效）的目标元素类型，即你可以将该注解应用在哪些程序元素上，如类、方法、字段等。
 
-* Java 定义了一系列目标元素类型，包括 **ElementType.TYPE（类）、ElementType.METHOD（方法）、ElementType.FIELD（字段）**等。
+* Java 定义了一系列目标元素类型，包括 **ElementType.TYPE（类）、ElementType.METHOD（方法）、ElementType.FIELD（字段）** 等。
 * 可以使用**大括号 {}** 来列出多个目标元素类型，表示该注解可以应用于多个不同的元素。
 
 

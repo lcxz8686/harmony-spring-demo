@@ -6,10 +6,12 @@ package com.spring;
  */
 public interface BeanPostProcessor {
     default Object postProcessBeforeInitialization(Object bean, String beanName) {
+        System.out.println("postProcessBeforeInitialization");
         return bean;
     }
 
     default Object postProcessAfterInitialization(Object bean, String beanName) {
+        System.out.println("postProcessAfterInitialization");
         return bean;
     }
 }

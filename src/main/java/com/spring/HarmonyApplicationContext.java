@@ -25,6 +25,7 @@ public class HarmonyApplicationContext {
     // 单例池
     private Map<String, Object> singletonObjects = new HashMap<>();
 
+    // BeanPostProcessor 缓存
     private List<BeanPostProcessor> beanPostProcessorList = new ArrayList<>();
 
     public HarmonyApplicationContext(Class configClass) {
@@ -40,6 +41,7 @@ public class HarmonyApplicationContext {
             if (beanDefinition.getScope().equals("Singleton")) {
                 // 单例
                 Object bean = createBean(beanName, beanDefinition);
+                // 存到单例池中
                 singletonObjects.put(beanName, bean);
             }
         }
@@ -64,15 +66,23 @@ public class HarmonyApplicationContext {
                 if (field.isAnnotationPresent(Autowired.class)) {
                     // 值为 true 则指示反射的对象在使用时应该取消 Java 语言访问检查
                     field.setAccessible(true);
-                    field.set(instance, getBean(field.getName()));
+                    field.set(instance, getBean(field.getName())); // 有循环依赖的问题
                 }
             }
 
+            /**
+             * 在Spring源码中
+             * 一个Bean实现了BeanNameAware接口后，Spring容器在创建Bean并将其属性注入之后，
+             * 会自动调用setBeanName方法，将Bean在容器中的名称作为参数传递给该方法。
+             */
             if (instance instanceof BeanNameAware) {
                 ((BeanNameAware)instance).setBeanName(beanName);
             }
 
-            // 初始化后
+            /**
+             * 在扫描的过程中 BeanPostProcessor的对象，都会被实例化到 beanPostProcessorList 里面 --> 初始化前、初始化后
+             */
+            // 初始化前
             for (BeanPostProcessor bProcessor : beanPostProcessorList) {
                 instance = bProcessor.postProcessBeforeInitialization(instance, beanName);
             }
@@ -107,6 +117,7 @@ public class HarmonyApplicationContext {
      * @return
      */
     public Object getBean(String beanName) {
+        // 判断这个bean在不在容器中
         if (!beanDefinitionMap.containsKey(beanName)) {
             throw new NullPointerException();
         }
@@ -114,7 +125,7 @@ public class HarmonyApplicationContext {
         BeanDefinition beanDefinition = beanDefinitionMap.get(beanName);
 
         if (beanDefinition.getScope().equals("Singleton")) {
-            // 单例
+            // 从单例池中先获取
             Object singletonBean = singletonObjects.get(beanName);
 
             // 在UserService中依赖注入OrderService，假如此时还没有创建OrderService的Bean，从单例池是获取不到的！
@@ -137,6 +148,8 @@ public class HarmonyApplicationContext {
      *   加载每一个class文件，得到每一个class对象
      *   判断该class对象有没有@Compennet注解，解析Bean的名字、Scope注解，得到一个 BeanDefinition
      *   将 BeanDefinition 存储到 BeanDefinitionMap 中
+     *
+     *   判断当前的这个类是不是一个 BeanPostProcessor, 如果是，则会进行实例化，加到这个 beanPostProcessorList 中缓存起来
      */
     private void scan(Class configClass) {
         if (configClass.isAnnotationPresent(ComponentScan.class)) {
@@ -219,5 +232,4 @@ public class HarmonyApplicationContext {
             }
         }
     }
-
 }
